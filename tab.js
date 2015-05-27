@@ -6,8 +6,8 @@
 		var defaults = {
 			tab: '.tab span',
 			content: '.content div',
-			isHoverTrigger: true,	// mouseover vs. mouseover jquery里没有hover事件
-			isClickeTrigger: false,
+			isHoverTrigger: true,	// mouseenter vs. mouseover jquery里没有hover事件
+			isClickTrigger: false,
 			isAutoTrigger: true,
 			curClass: 'cur',
 			animTime: 0,
@@ -28,35 +28,33 @@
 
 			this.$tab = this.$wrapper.find(this.settings.tab);
 			this.$content = this.$wrapper.find(this.settings.content);
-			this.index = 0;
+			this.curIndex = 0;
 			this.inter = null;
 
-			if(this.settings.isHoverTrigger) {
-				this.triggerEvent = 'mouseover';
-			} else {
-				this.triggerEvent = 'click';
-			}
+			$(this.$tab[this.curIndex]).trigger('click');
 
-			if(this.settings.isAutoTrigger) {
-				this.setAutoTrigger();
-			}
-			
+			this.setAutoTrigger();
+
 		},
+
 		setAutoTrigger: function() {
 			var _self = this;
 
-			this.inter = setInterval(function() {
-				_self.triggerNext();
-			}, 1000);
-		
+			if(this.settings.isAutoTrigger) {
+				clearInterval(this.inter);
+				this.inter = setInterval(function() {
+					_self.triggerNext();
+				}, 1000);
+			}	
+					
 		},
 
 		triggerNext: function() {
-			this.index ++;
-			if(this.index == this.$tab.length) {
-				this.index = 0;
+			this.curIndex++;
+			if(this.curIndex == this.$tab.length) {
+				this.curIndex = 0;
 			}
-			$(this.$tab[this.index]).trigger(this.triggerEvent);			
+			$(this.$tab[this.curIndex]).trigger('click');			
 		},
 
 		bindHandler: function() {
@@ -74,34 +72,40 @@
 					.siblings()
 					.hide(_self.settings.animTime);
 
-				_self.index = index;
+				_self.curIndex = index;
 			}
 
 			var _self = this;
-			/*if(this.settings.isClickeTrigger) {
-				this.$tab.click(function() {
+			
+			this.$tab.click(function() {
+				showTab.call(this, _self);
+			});
+
+			/*if(this.settings.isHoverTrigger) {
+				this.$tab.mouseenter(function() {
 					...
 				})
-			}*/
-			this.$tab.click(function() {
-				if (_self.triggerEvent === 'click') {
+			}*///注意if的位置
+			this.$tab.mouseenter(function() {	
+				if (_self.settings.isHoverTrigger) {
 					showTab.call(this, _self);
 				}
+				clearInterval(_self.inter);	
 			});
 
-			this.$tab.mouseover(function() {
-				if (_self.triggerEvent === 'mouseover') {
-					showTab.call(this, _self);
-				}
-			});
-
-			this.$tab.hover(function() {
-				clearInterval(_self.inter);
-			}, function() {
+			this.$tab.mouseleave(function() {
 				_self.setAutoTrigger();
 			});
 
-			$(this.$tab[_self.index]).trigger(this.triggerEvent);
+
+			this.$content.mouseenter(function() { 
+				clearInterval(_self.inter);	
+			});
+
+			this.$content.mouseleave(function() {
+				_self.setAutoTrigger();			
+			});
+
 		}
 	}
 
